@@ -6,6 +6,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.relative_locator import locate_with
 
+from PIL import Image
+import sys
+
+import pyocr
+import pyocr.builders
+
 
 driver = webdriver.Chrome() 
 driver.get('https://uis.fudan.edu.cn/authserver/login?service=https%3A%2F%2Fzlapp.fudan.edu.cn%2Fa_fudanzlapp%2Fapi%2Fsso%2Findex%3Fredirect%3Dhttps%253A%252F%252Fzlapp.fudan.edu.cn%252Fsite%252Fncov%252FfudanDaily%253Ffrom%253Dhistory%26from%3Dwap') 
@@ -15,8 +21,7 @@ driver.get('https://uis.fudan.edu.cn/authserver/login?service=https%3A%2F%2Fzlap
 username_element = driver.find_element(By.ID, "username")
 userpass_element = driver.find_element(By.ID, "password")
 loginbtn_element = driver.find_element(By.ID, "idcheckloginbtn")
-# username_element = driver.find_elements(locate_with(By.id, "username"))
-# userpass_element = driver.find_elements(locate_with(By.id, "password"))
+
 username = "19300806053"
 userpass = "Fudan6053"
 
@@ -66,8 +71,34 @@ confirm_submitbtn_element.click()
 # ランダムな英文字が書かれた画像を保存する
 time.sleep(5) #画像が表示されるまで
 cipher_img = driver.find_element(By.CLASS_NAME, "wapat-title-img").find_element(By.TAG_NAME, "img").screenshot_as_png
-with open('./img.png', 'wb') as f:
+cipher_img_path = '/Users/yoshi/Desktop/auto-report-health/cipher/' + str(int(time.time())) + '.png'
+with open(cipher_img_path, 'wb') as f:
     f.write(cipher_img)
+
+# 画像認識
+pyocr_tools = pyocr.get_available_tools()
+if len(pyocr_tools) == 0:
+    print("No OCR tool found")
+    sys.exit(1)
+tool = pyocr_tools[0]
+
+analysed_text = tool.image_to_string(
+    Image.open(cipher_img_path),
+    lang="eng",
+    builder=pyocr.builders.TextBuilder()
+)
+# 空白を削除
+analysed_text = analysed_text.replace(' ','')
+print(analysed_text)
+
+# 解析されたテキストを入力
+cipher_text_area_element = driver.find_element(By.CLASS_NAME, "wapat-title-input").find_element(By.TAG_NAME,"input")
+cipher_text_area_element.send_keys(analysed_text)
+
+time.sleep(3)
+driver.find_element(By.CLASS_NAME,"wapat-btn-ok").click()
+
+
 
 time.sleep(10)
 print("完了")
