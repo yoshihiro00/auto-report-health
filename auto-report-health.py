@@ -20,7 +20,6 @@ loginbtn_element = driver.find_element(By.ID, "idcheckloginbtn")
 username = "19300806053"
 userpass = "Fudan6053"
 
-print(username_element)
 #IDとパスワードを入力
 username_element.send_keys(username)
 userpass_element.send_keys(userpass)
@@ -43,7 +42,32 @@ check_is_campus_element = driver.find_element(By.NAME, "sfzx").find_elements(By.
 check_is_campus_element.click()
 
 #请选择目前所在国家の部分
+select_country_element = driver.find_element(By.CLASS_NAME, "select2-selection__rendered")
+select_country_element.click()
 
+selection_list_elements = driver.find_element(By.ID, "select2-szgj-results").find_elements(By.TAG_NAME,"li")
+
+# 国のリストから日本を探してIDを返す
+def searchJapanID():
+    for i in selection_list_elements:
+        element_id = i.get_attribute("id")
+        if "日本" in element_id :
+            return element_id
+
+selection_japan_element = driver.find_element(By.ID, searchJapanID())
+selection_japan_element.click()
+
+# 提交信息の部分
+submitbtn_element = driver.find_element(By.CLASS_NAME, "footers")
+submitbtn_element.click()
+confirm_submitbtn_element = driver.find_element(By.CLASS_NAME, "wapcf-btn-ok")
+confirm_submitbtn_element.click()
+
+# ランダムな英文字が書かれた画像を保存する
+time.sleep(5) #画像が表示されるまで
+cipher_img = driver.find_element(By.CLASS_NAME, "wapat-title-img").find_element(By.TAG_NAME, "img").screenshot_as_png
+with open('./img.png', 'wb') as f:
+    f.write(cipher_img)
 
 time.sleep(10)
 print("完了")
