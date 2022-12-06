@@ -63,42 +63,60 @@ selection_japan_element = driver.find_element(By.ID, searchJapanID())
 selection_japan_element.click()
 
 # 提交信息の部分
-submitbtn_element = driver.find_element(By.CLASS_NAME, "footers")
-submitbtn_element.click()
-confirm_submitbtn_element = driver.find_element(By.CLASS_NAME, "wapcf-btn-ok")
-confirm_submitbtn_element.click()
+# 提交信息のボタンを押す関数
+def clickSubmitBtn():
+    submitbtn_element = driver.find_element(By.CLASS_NAME, "footers").find_element(By.TAG_NAME,"a")
+    submitbtn_element.click()
+    confirm_submitbtn_element = driver.find_element(By.CLASS_NAME, "wapcf-btn-ok")
+    confirm_submitbtn_element.click()
 
-# ランダムな英文字が書かれた画像を保存する
-time.sleep(5) #画像が表示されるまで
-cipher_img = driver.find_element(By.CLASS_NAME, "wapat-title-img").find_element(By.TAG_NAME, "img").screenshot_as_png
-cipher_img_path = '/Users/yoshi/Desktop/auto-report-health/cipher/' + str(int(time.time())) + '.png'
-with open(cipher_img_path, 'wb') as f:
-    f.write(cipher_img)
+def inputRequriedText():
+    # ランダムな英文字が書かれた画像を保存する
+    time.sleep(3) #画像が表示されるまで
+    cipher_img = driver.find_element(By.CLASS_NAME, "wapat-title-img").find_element(By.TAG_NAME, "img").screenshot_as_png
+    cipher_img_path = '/Users/yoshi/Desktop/auto-report-health/cipher/' + str(int(time.time())) + '.png'
+    with open(cipher_img_path, 'wb') as f:
+        f.write(cipher_img)
 
-# 画像認識
-pyocr_tools = pyocr.get_available_tools()
-if len(pyocr_tools) == 0:
-    print("No OCR tool found")
-    sys.exit(1)
-tool = pyocr_tools[0]
+    # 画像認識
+    pyocr_tools = pyocr.get_available_tools()
+    if len(pyocr_tools) == 0:
+        print("No OCR tool found")
+        sys.exit(1)
+    tool = pyocr_tools[0]
 
-analysed_text = tool.image_to_string(
-    Image.open(cipher_img_path),
-    lang="eng",
-    builder=pyocr.builders.TextBuilder()
-)
-# 空白を削除
-analysed_text = analysed_text.replace(' ','')
-print(analysed_text)
+    analysed_text = tool.image_to_string(
+        Image.open(cipher_img_path),
+        lang="eng",
+        builder=pyocr.builders.TextBuilder()
+    )
+    # 空白を削除
+    analysed_text = analysed_text.replace(' ','')
+    print(analysed_text)
 
-# 解析されたテキストを入力
-cipher_text_area_element = driver.find_element(By.CLASS_NAME, "wapat-title-input").find_element(By.TAG_NAME,"input")
-cipher_text_area_element.send_keys(analysed_text)
+    # 解析されたテキストを入力
+    cipher_text_area_element = driver.find_element(By.CLASS_NAME, "wapat-title-input").find_element(By.TAG_NAME,"input")
+    cipher_text_area_element.send_keys(analysed_text)
+    time.sleep(3)
+    driver.find_element(By.CLASS_NAME,"wapat-btn-ok").click()
 
-time.sleep(3)
-driver.find_element(By.CLASS_NAME,"wapat-btn-ok").click()
+# 入力した認証コードが正しくて健康報告が成功したかどうかbool値で返す
+def getVerifyResult():
+    time.sleep(3)
+    result = driver.find_element(By.CLASS_NAME,"hint-show").find_element(By.TAG_NAME,"p").get_attribute("class")
+    if(result == "err"):
+        return False
+
+clickSubmitBtn()
+inputRequriedText()
+
+# もし失敗していたらやり直しさせる
+while(getVerifyResult() == False):
+    # エラーメッセージを閉じる
+    driver.find_element(By.CLASS_NAME,"hint-show").find_element(By.TAG_NAME,"a").click()
+    clickSubmitBtn()
+    inputRequriedText()
 
 
-
-time.sleep(10)
+time.sleep(5)
 print("完了")
